@@ -1,2 +1,2 @@
-PyWaves==0.8.11
-requests==2.18.4
+PyWaves==0.8.24
+requests==2.22.0
