@@ -79,12 +79,12 @@ def load_all_transactions(address):
 
     while loaded_transactions:
         print(f'Loaded {len(loaded_transactions)} more transaction(s)')
-        all_transactions.append(loaded_transactions)
+        all_transactions.extend(loaded_transactions)
         loaded_transactions = requests.get(
             f'http://nodes.wavesnodes.com/transactions/address/{address}/limit/1000?after={loaded_transactions[-1]["id"]}'
         ).json()[0]
 
-    print(f'Loaded {len(all_transactions)} transaction(s)')
+    print(f'Loaded a total of {len(all_transactions)} transaction(s)')
 
     return all_transactions
 
@@ -93,7 +93,7 @@ def calculate_balance_changes():
     address = sys.argv[1]
     transactions = load_all_transactions(address)
     if transactions:
-        balance_chages = [balance_change(t, address) for t in sorted(transactions[0], key=lambda x: x['height'])]
+        balance_chages = [balance_change(t, address) for t in sorted(transactions, key=lambda x: x['height'])]
         for bc in total_balance(balance_chages):
             print('{:6} {:45} {} {:8d} {} {:12d} {:12d} {:12d} {:12d}'.format(*bc))
     else:
