@@ -56,6 +56,16 @@ def balance_change(tx, address):
         lease_out = -KNOWN_LEASES[tx['leaseId']]['amount']
     elif tx['type'] == 1:
         amount = tx['amount']
+    elif tx['type'] == 16:
+        if tx['payment'] and tx['payment'][0]['assetId'] is None:
+            payment_amount = tx['payment'][0]['amount']
+            amount = is_sender and -payment_amount or payment_amount
+        for p in tx['stateChanges']['transfers']:
+            if p['address'] == address and (p['asset'] == 'm9' or p['asset'] is None):
+                amount += p['amount']
+            if tx['dApp'] == address and (p['asset'] == 'm9' or p['asset'] is None):
+                amount -= p['amount']
+
     else:
         amount = 0
     return tx['height'], tx['timestamp'], tx['id'], is_sender and '[>' or '>]', fee_in_waves, tx[
@@ -72,17 +82,18 @@ def total_balance(txs):
 
 
 def load_all_transactions(address):
+    node_address = sys.argv[2]
     all_transactions = []
     loaded_transactions = requests.get(
-        f'http://nodes.wavesnodes.com/transactions/address/{address}/limit/1000'
-    ).json()[0]
+        f'{node_address}/debug/stateChanges/address/{address}/limit/1000'
+    ).json()
 
     while loaded_transactions:
         print(f'Loaded {len(loaded_transactions)} more transaction(s)')
         all_transactions.extend(loaded_transactions)
         loaded_transactions = requests.get(
-            f'http://nodes.wavesnodes.com/transactions/address/{address}/limit/1000?after={loaded_transactions[-1]["id"]}'
-        ).json()[0]
+            f'{node_address}/debug/stateChanges/address/{address}/limit/1000?after={loaded_transactions[-1]["id"]}'
+        ).json()
 
     print(f'Loaded a total of {len(all_transactions)} transaction(s)')
 
@@ -95,7 +106,7 @@ def calculate_balance_changes():
     if transactions:
         balance_chages = [balance_change(t, address) for t in sorted(transactions, key=lambda x: x['height'])]
         for bc in total_balance(balance_chages):
-            print('{:6} {:45} {} {:8d} {} {:12d} {:12d} {:12d} {:12d}'.format(*bc))
+            print('{:6} {:45} {:2} {:10d} {} {:12d} {:12d} {:12d} {:12d}'.format(*bc))
     else:
         print(transactions)
 
