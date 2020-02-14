@@ -24,6 +24,7 @@ def balance_change(tx, address, asset, sponsor):
     direction = ""
     amount = 0
     fee = 0
+    total = 0
     if ('feeAsset' in tx and tx['feeAsset'] == asset) or ('feeAssetId' in tx and tx['feeAssetId'] == asset):
         fee = tx['fee']
     if tx['type'] == 3 and tx['id'] == asset:
@@ -52,6 +53,7 @@ def balance_change(tx, address, asset, sponsor):
                     amount += int(tx['price'] * tx['amount'] / PRICE_CONSTANT)
                 else:
                     amount += -tx['amount']
+            total = amount
         if tx['order2']['sender'] == address:
             order = tx['order2']
             if order['orderType'] == 'buy':
@@ -72,6 +74,7 @@ def balance_change(tx, address, asset, sponsor):
                     amount += int(tx['price'] * tx['amount'] / PRICE_CONSTANT)
                 else:
                     amount += -tx['amount']
+            total = amount
     elif tx['type'] == 10 and tx['sender'] == address:  # create alias
         ALIASES.append(tx['alias'])
     elif tx['type'] == 11 and tx['assetId'] == asset:
@@ -81,6 +84,7 @@ def balance_change(tx, address, asset, sponsor):
             for t in tx['transfers']:
                 if t['recipient'] == address or is_alias(t['recipient']):
                     amount += t['amount']
+                    total += t['amount']
     elif tx['type'] == 14 and tx['assetId'] == asset:
         sponsor = True
     elif tx['type'] == 16:
@@ -109,7 +113,7 @@ def balance_change(tx, address, asset, sponsor):
         direction = '+'
         total = amount + fee
     else:
-        total = fee
+        total += fee
 
     return \
         tx['timestamp'], \
