@@ -1,2 +1,2 @@
 PyWaves==0.8.24
-requests==2.22.0
+requests==2.31.0
